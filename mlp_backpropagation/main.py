@@ -12,7 +12,6 @@ def main():
     np.random.seed(0)
     digits = load_digits()
 
-    # [Formula 1] inputs = digits.data / 16.0, 
     # deixando os pixels entre 0 e 1
     inputs = digits.data / 16.0
 

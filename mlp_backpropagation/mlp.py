@@ -17,7 +17,6 @@ class MLP:
     def forward(self, inputs):
         output = inputs
 
-        # [Formula 11] 
         # output de uma camada vira entrada da próxima camada.forward(output)
         for camada in self.camadas:
             output = camada.forward(output)
@@ -29,12 +28,10 @@ class MLP:
         if self.camadas[-1].ativacao != "softmax":
             raise ValueError("O treinamento exige softmax na última camada.")
 
-        # [Formula 7] 
         # gradiente vem de self.criterio.backward_softmax(output, targets)
         gradiente = self.criterio.backward_softmax(output, targets)
         gradiente = self.camadas[-1].backward(gradiente, gradiente_logits=True)
 
-        # [Formula 11] cada camada.backward(gradiente) 
         # devolve gradiente pra camada anterior
         for camada in reversed(self.camadas[:-1]):
             gradiente = camada.backward(gradiente)
@@ -84,14 +81,11 @@ class MLP:
         targets = np.asarray(targets)
 
         if targets.ndim == 2:
-            # [Formula 12] targets = np.argmax(targets, axis=1) 
             # convertendo one-hot em índices
             targets = np.argmax(targets, axis=1)
 
-        # [Formula 12] predicoes = np.argmax(output, axis=1)
         # a classe mais provável
         predicoes = np.argmax(output, axis=1)
 
-        # [Formula 12] np.mean(predicoes == targets) 
         # calcula a proporção de acertos
         return np.mean(predicoes == targets)
