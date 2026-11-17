@@ -1,12 +1,13 @@
 import numpy as np
 
-from .loss import CategoricalCrossEntropy
+from loss import CategoricalCrossEntropy
+from layer import Layer
 
 
 """Rede MLP e treinamento em mini-lotes."""
 class MLP:
 
-    def __init__(self, camadas):
+    def __init__(self, camadas: list[Layer]):
         self.camadas = list(camadas)
 
         if not self.camadas:
@@ -14,27 +15,27 @@ class MLP:
 
         self.criterio = CategoricalCrossEntropy()
 
-    def forward(self, inputs):
+    def prever_probabilidades(self, inputs):
         output = inputs
 
-        # output de uma camada vira entrada da próxima camada.forward(output)
+        # output de uma camada vira entrada da próxima camada.calcular_saida(output)
         for camada in self.camadas:
-            output = camada.forward(output)
+            output = camada.calcular_saida(output)
 
         return output
 
-    def backward(self, output, targets):
-        """Percorre a rede de trás para frente sem atualizar os pesos."""
+    def retropropagar_erro(self, output, targets):
+        """Coordena o backpropagation de toda a rede; a atualização fica em treinar."""
         if self.camadas[-1].ativacao != "softmax":
             raise ValueError("O treinamento exige softmax na última camada.")
 
-        # gradiente vem de self.criterio.backward_softmax(output, targets)
+        # backward_softmax já deriva softmax + perda; gradiente_logits=True evita repetir essa derivada
         gradiente = self.criterio.backward_softmax(output, targets)
-        gradiente = self.camadas[-1].backward(gradiente, gradiente_logits=True)
+        gradiente = self.camadas[-1].calcular_gradientes(gradiente, gradiente_logits=True)
 
-        # devolve gradiente pra camada anterior
+        # percorre as ocultas de trás pra frente; cada camada devolve gradiente pra anterior
         for camada in reversed(self.camadas[:-1]):
-            gradiente = camada.backward(gradiente)
+            gradiente = camada.calcular_gradientes(gradiente)
 
         return gradiente
 
@@ -46,7 +47,7 @@ class MLP:
             taxa_aprendizado=0.1,
             tamanho_lote=32
     ):
-        """Treina a rede e guarda a perda e a acurácia de cada época."""
+        """Em cada lote: previsão, gradientes e atualização. Guarda as métricas por época."""
         inputs = np.asarray(inputs)
         targets = np.asarray(targets)
 
@@ -62,13 +63,13 @@ class MLP:
 
             for inicio in range(0, len(inputs), tamanho_lote):
                 lote = indices[inicio:inicio + tamanho_lote]
-                output = self.forward(inputs[lote])
-                self.backward(output, targets[lote])
+                output = self.prever_probabilidades(inputs[lote])
+                self.retropropagar_erro(output, targets[lote])
 
                 for camada in self.camadas:
                     camada.atualizar_parametros(taxa_aprendizado)
 
-            output = self.forward(inputs)
+            output = self.prever_probabilidades(inputs)
             historico.append({
                 "epoca": epoca,
                 "perda": self.criterio.loss(output, targets),

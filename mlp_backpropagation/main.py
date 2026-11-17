@@ -2,9 +2,9 @@ import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 
-from .layer import Layer
-from .loss import CategoricalCrossEntropy
-from .mlp import MLP
+from layer import Layer
+from loss import CategoricalCrossEntropy
+from mlp import MLP
 
 
 """Treinamento da MLP com imagens de dígitos."""
@@ -36,7 +36,7 @@ def main():
 
     criterio = CategoricalCrossEntropy()
 
-    output = rede.forward(treino_inputs)
+    output = rede.prever_probabilidades(treino_inputs)
     print(f"Antes: perda={criterio.loss(output, treino_targets):.4f}, "
           f"acurácia de treino={rede.acuracia(output, treino_targets):.2%}")
 
@@ -48,7 +48,7 @@ def main():
                   f"perda={metricas['perda']:.4f}, "
                   f"acurácia de treino={metricas['acuracia']:.2%}")
 
-    output = rede.forward(teste_inputs)
+    output = rede.prever_probabilidades(teste_inputs)
 
     print(f"Teste: perda={criterio.loss(output, teste_targets):.4f}, "
           f"acurácia={rede.acuracia(output, teste_targets):.2%}")

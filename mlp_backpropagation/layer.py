@@ -17,10 +17,10 @@ class Layer:
         self.output = None
         self.inputs = None
 
-    def forward(self, inputs):
+    def calcular_saida(self, inputs):
         self.inputs = inputs
 
-        # self.output = inputs @ self.pesos + self.bias
+        # self.output = inputs @ self.pesos + self.bias; self.inputs fica guardado pro gradiente
         self.output = np.dot(inputs, self.pesos) + self.bias
 
         if self.ativacao == "relu":
@@ -31,22 +31,22 @@ class Layer:
 
         return self.output
 
-    def backward(self, gradiente, gradiente_logits=False):
-        """Calcula os gradientes da camada e devolve o gradiente das entradas."""
+    def calcular_gradientes(self, gradiente, gradiente_logits=False):
+        """Calcula os gradientes desta camada, sem atualizar seus pesos ou bias."""
         if self.inputs is None:
-            raise RuntimeError("Execute forward antes de backward.")
+            raise RuntimeError("Execute calcular_saida antes de calcular_gradientes.")
 
         if gradiente_logits and self.ativacao != "softmax":
             raise ValueError("Gradiente de logits exige uma camada softmax.")
 
         gradiente = np.array(gradiente, copy=True)
         if self.ativacao == "relu":
-            # zera gradiente onde self.output <= 0
+            # aplica a derivada da ReLU: zera gradiente onde self.output <= 0
             # onde self.output > 0, gradiente passa sem alteração
             gradiente[self.output <= 0] = 0
 
         elif self.ativacao == "softmax" and not gradiente_logits:
-            # produto soma gradiente * self.output por amostra
+            # só deriva a softmax aqui quando gradiente_logits=False; produto soma por amostra
             produto = np.sum(gradiente * self.output, axis=1, keepdims=True)
             # gradiente = self.output * (gradiente - produto)
             gradiente = self.output * (gradiente - produto)
@@ -73,7 +73,11 @@ class Layer:
 
     def softmax(self, inputs):
         # exponenciais usa inputs menos o maior valor de cada amostra pra evitar overflow
-        exponenciais = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
+        exponenciais = np.exp(
+            inputs - np.max(inputs, axis=1, keepdims=True)
+        )
 
         # divide exponenciais pela soma de exponenciais de cada amostra
-        return exponenciais / np.sum(exponenciais, axis=1, keepdims=True)
+        return exponenciais / np.sum(
+            exponenciais, axis=1, keepdims=True
+        )

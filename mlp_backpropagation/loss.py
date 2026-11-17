@@ -30,8 +30,8 @@ class CategoricalCrossEntropy:
     def backward_softmax(self, output, targets):
         """Derivada de softmax + entropia cruzada em relação aos logits.
 
-        Recebe probabilidades e rótulos por índice ou one-hot. Os dois juntos
-        evita dividir por probabilidades próximas de zero.
+        Recebe probabilidades e rótulos por índice ou one-hot. A derivada
+        combinada evita dividir por probabilidades próximas de zero.
         """
         targets = np.asarray(targets)
         gradiente = np.array(output, copy=True)
